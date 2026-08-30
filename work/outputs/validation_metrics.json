@@ -1,0 +1,41 @@
+{
+  "n_rows": 30000,
+  "n_clients": 32,
+  "positive_class_rate": 0.5420666666666667,
+  "baseline_full_data": {
+    "accuracy": 0.4583333333333333,
+    "precision": 0.5909090909090909,
+    "recall": 0.0023982290001229862,
+    "f1": 0.004777070063694267
+  },
+  "baseline_f1_on_random_test": 0.004895960832313341,
+  "baseline_f1_on_grouped_test": 0.0,
+  "random_split": {
+    "accuracy": 0.6131666666666666,
+    "precision": 0.6146269391775425,
+    "recall": 0.7675276752767528,
+    "f1": 0.6826199917954328,
+    "roc_auc": 0.6393023619100819
+  },
+  "grouped_split": {
+    "accuracy": 0.5375628752231056,
+    "precision": 0.5401126911725248,
+    "recall": 0.6392505557319784,
+    "f1": 0.5855148342059336,
+    "roc_auc": 0.5464878307919663
+  },
+  "random_split_f1": 0.6826199917954328,
+  "grouped_split_f1": 0.5855148342059336,
+  "grouped_precision": 0.5401126911725248,
+  "grouped_recall": 0.6392505557319784,
+  "confusion_matrix_grouped": [
+    [
+      1300,
+      1714
+    ],
+    [
+      1136,
+      2013
+    ]
+  ]
+}
