@@ -1,0 +1,61 @@
+{
+  "leakage_audit_table": [
+    {
+      "Column": "trend_direction",
+      "Present in Dataset": true,
+      "Used as Model Feature": false
+    },
+    {
+      "Column": "trend_pct",
+      "Present in Dataset": true,
+      "Used as Model Feature": false
+    },
+    {
+      "Column": "is_declining",
+      "Present in Dataset": false,
+      "Used as Model Feature": false
+    },
+    {
+      "Column": "is_quick_win",
+      "Present in Dataset": false,
+      "Used as Model Feature": false
+    },
+    {
+      "Column": "needs_indexing",
+      "Present in Dataset": false,
+      "Used as Model Feature": false
+    },
+    {
+      "Column": "needs_ctr_fix",
+      "Present in Dataset": false,
+      "Used as Model Feature": false
+    },
+    {
+      "Column": "needs_engagement_fix",
+      "Present in Dataset": false,
+      "Used as Model Feature": false
+    },
+    {
+      "Column": "ai_opportunity",
+      "Present in Dataset": false,
+      "Used as Model Feature": false
+    },
+    {
+      "Column": "is_underperformer",
+      "Present in Dataset": false,
+      "Used as Model Feature": false
+    },
+    {
+      "Column": "is_initial_refresh_candidate",
+      "Present in Dataset": false,
+      "Used as Model Feature": false
+    },
+    {
+      "Column": "health_score",
+      "Present in Dataset": false,
+      "Used as Model Feature": false
+    }
+  ],
+  "honest_grouped_f1": 0.5855148342059336,
+  "leaky_grouped_f1": 0.850195136595617
+}

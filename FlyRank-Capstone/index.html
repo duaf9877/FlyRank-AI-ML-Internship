@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search-Driven Content Refresh Prioritization — FlyRank Capstone</title>
+<style>
+  :root{
+    --ink:#1b2430;
+    --paper:#f7f5f0;
+    --panel:#ffffff;
+    --line:#dcd6c8;
+    --slate:#5b6472;
+    --amber:#c17a2e;
+    --teal:#2f6b63;
+    --red:#a4432f;
+    --mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+    --serif: 'Source Serif 4', 'Iowan Old Style', Georgia, serif;
+    --sans: 'Inter', -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family: var(--sans); line-height:1.6; font-size:16px;
+  }
+  .wrap{max-width:920px; margin:0 auto; padding:0 28px;}
+  header.hero{
+    border-bottom:2px solid var(--ink);
+    padding:64px 0 40px 0;
+  }
+  .eyebrow{
+    font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--teal); margin-bottom:18px;
+  }
+  h1{
+    font-family:var(--serif); font-weight:600; font-size:clamp(32px,5vw,48px);
+    line-height:1.08; margin:0 0 20px 0; max-width:14ch;
+  }
+  .subtitle{ font-size:19px; color:var(--slate); max-width:62ch; margin-bottom:28px;}
+  .meta-row{ display:flex; gap:28px; flex-wrap:wrap; font-family:var(--mono); font-size:12.5px; color:var(--slate); }
+  .meta-row div span{display:block; color:var(--ink); font-size:14px; margin-top:2px;}
+  section{ padding:48px 0; border-bottom:1px solid var(--line); }
+  section:last-of-type{border-bottom:none;}
+  h2{
+    font-family:var(--serif); font-size:28px; margin:0 0 8px 0; font-weight:600;
+  }
+  .section-index{ font-family:var(--mono); font-size:12px; color:var(--amber); letter-spacing:.1em; margin-bottom:6px;}
+  p{ margin:0 0 16px 0; }
+  .lede{font-size:17px;}
+  ul,ol{ padding-left:22px; }
+  li{ margin-bottom:6px; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:24px 0;}
+  @media(max-width:640px){ .grid2{grid-template-columns:1fr;} }
+  .stat-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:20px 22px;
+  }
+  .stat-card .num{ font-family:var(--serif); font-size:34px; font-weight:600; }
+  .stat-card .lbl{ font-family:var(--mono); font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--slate); margin-top:4px;}
+  .stat-card .note{ font-size:13px; color:var(--slate); margin-top:8px;}
+  figure{ margin:28px 0; }
+  figure img{ width:100%; border:1px solid var(--line); border-radius:4px; display:block; }
+  figcaption{ font-family:var(--mono); font-size:12.5px; color:var(--slate); margin-top:8px; }
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; margin:18px 0; }
+  th,td{ text-align:left; padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top;}
+  th{ font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--slate); }
+  td.mono, .mono{ font-family:var(--mono); font-size:12.5px; }
+  .tag{ display:inline-block; font-family:var(--mono); font-size:11px; padding:2px 7px; border-radius:3px; margin:1px 3px 1px 0; }
+  .tag.risk{ background:#f6e3da; color:var(--red); }
+  .tag.value{ background:#e2ede2; color:var(--teal); }
+  .tag.stale{ background:#f2e8d5; color:var(--amber); }
+  .tag.no{ background:#eee; color:var(--slate); }
+  .callout{
+    border-left:3px solid var(--amber); background:#fbf3e7; padding:16px 20px; font-size:14.5px; margin:20px 0; border-radius:0 4px 4px 0;
+  }
+  .callout.limit{ border-left-color:var(--red); background:#f8ece8; }
+  .callout strong{ display:block; font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px;}
+  .archetype-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:20px 0;}
+  @media(max-width:640px){ .archetype-grid{grid-template-columns:1fr;} }
+  .arch-card{ border:1px solid var(--line); border-radius:4px; padding:14px 16px; background:var(--panel);}
+  .arch-card h4{ margin:0 0 6px 0; font-family:var(--mono); font-size:13px; }
+  .arch-card p{ font-size:13.5px; margin:0; color:var(--slate); }
+  .nogo{ columns:2; column-gap:24px; font-size:14px; }
+  @media(max-width:640px){ .nogo{columns:1;} }
+  footer{ padding:40px 0 80px 0; font-size:13px; color:var(--slate); }
+  a{ color:var(--teal); }
+  code{ background:#eee6d6; padding:1px 5px; border-radius:3px; font-family:var(--mono); font-size:.92em;}
+  .toc{ font-family:var(--mono); font-size:13px; columns:2; margin-top:20px;}
+  @media(max-width:640px){ .toc{columns:1;} }
+  .toc a{ display:block; padding:3px 0; text-decoration:none; color:var(--slate); }
+  .toc a:hover{ color:var(--teal); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header class="hero">
+  <div class="eyebrow">FlyRank AI/ML Internship — Capstone Project</div>
+  <h1>Search-Driven Content Refresh Prioritization</h1>
+  <p class="subtitle">A decision-support system that uses search performance, engagement, and content-freshness signals to rank content pages for human review — not to predict or automate content changes.</p>
+  <div class="meta-row">
+    <div>Dataset<span>30,000 pages · 32 clients</span></div>
+    <div>Method<span>Logistic Regression</span></div>
+    <div>Validation<span>Client-grouped split</span></div>
+    <div>Output<span>Ranked, explainable action queue</span></div>
+  </div>
+  <nav class="toc">
+    <a href="#abstract">Abstract</a>
+    <a href="#problem">Problem statement</a>
+    <a href="#data">Data</a>
+    <a href="#methodology">Methodology</a>
+    <a href="#validation">Honest validation</a>
+    <a href="#leakage">Leakage audit</a>
+    <a href="#errors">Error analysis</a>
+    <a href="#freshness">Freshness &amp; decay</a>
+    <a href="#queue">Ranked action queue</a>
+    <a href="#archetypes">Content archetypes</a>
+    <a href="#review">Human review &amp; no-go list</a>
+    <a href="#limitations">Limitations</a>
+    <a href="#monitoring">Monitoring</a>
+    <a href="#repro">Reproducibility</a>
+  </nav>
+</header>
+
+<section id="abstract">
+  <div class="section-index">Abstract</div>
+  <h2>Summary</h2>
+  <p class="lede">Content teams manage more pages than they can review with equal priority, so this project studies whether search performance, engagement, and freshness signals can be combined into a ranked, explainable review queue. Using an anonymized FlyRank dataset of 30,000 content pages across 32 clients, a logistic regression model was trained to estimate the likelihood of a dataset-defined decline label, evaluated first with a random row-level split and then with a stricter client-grouped split to test generalization to unseen clients. The client-grouped evaluation produced a lower, more honest F1 score than the random split, confirming that random splits can overstate real-world performance when the same client appears in both training and test data. The resulting decline probabilities were combined with an operational value score and observable freshness and engagement signals into a transparent priority score, ranked queue, and set of reason codes. The system is intended strictly as human-in-the-loop decision support: it prioritizes review, it does not predict outcomes or automate content changes.</p>
+</section>
+
+<section id="problem">
+  <div class="section-index">01 — Problem</div>
+  <h2>Which pages should we review first, and why?</h2>
+  <p>Content teams cannot manually inspect every page with equal priority. A page may deserve attention because its search performance is declining, because it receives high impressions but few clicks, because it hasn't been updated in a long time, because engagement is weak, or because several of these signals appear together. This project builds a system that turns those signals into a ranked, explainable queue for a human content team — answering <em>what to look at first</em>, never <em>what to change</em>.</p>
+  <div class="callout">
+    <strong>Research questions</strong>
+    Can search, engagement, and freshness signals identify pages worth prioritizing for review? Does client-grouped validation give a more realistic performance estimate than a random split? Can model output and observable signals be converted into an explainable action queue?
+  </div>
+</section>
+
+<section id="data">
+  <div class="section-index">02 — Data</div>
+  <h2>Dataset</h2>
+  <p>The project uses the FlyRank ML Internship content-refresh dataset: <strong>30,000 anonymized content pages</strong> spanning <strong>32 clients</strong>, identified only by <code>content_id</code> and <code>client_id</code>. No client names, domains, URLs, or private queries appear anywhere in this project or its outputs.</p>
+  <div class="grid2">
+    <div class="stat-card">
+      <div class="num">30,000</div>
+      <div class="lbl">content pages</div>
+      <div class="note">Rows in the raw dataset used for training, validation, and the final action queue.</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">32</div>
+      <div class="lbl">anonymized clients</div>
+      <div class="note">Used only for grouped-split validation — never as a model feature.</div>
+    </div>
+  </div>
+  <p>Feature categories used: <strong>search performance</strong> (impressions, clicks, average position, CTR), <strong>engagement</strong> (sessions, pageviews, users, engagement rate), <strong>freshness</strong> (content age, days since last update), <strong>content characteristics</strong> (word count, content type, main intent, provider used), and <strong>search opportunity</strong> (search volume, competition, CPC).</p>
+</section>
+
+<section id="methodology">
+  <div class="section-index">03 — Methodology</div>
+  <h2>Target definition and model</h2>
+  <p>The supervised label is a <strong>dataset-defined proxy</strong>, not an independent ground truth:</p>
+  <p class="mono">target = 1 if trend_direction == "down" else 0</p>
+  <p>The model <strong>estimates the likelihood of this dataset-defined decline label</strong> — it does not predict that a page will definitely decline, and it makes no claim about Google's ranking algorithm.</p>
+  <p>A <strong>Logistic Regression</strong> pipeline was used for interpretability: numeric features are median-imputed and standard-scaled; categorical features are most-frequent-imputed and one-hot encoded. The output is a <code>decline_probability</code> between 0 and 1, treated as a model score, not a certainty.</p>
+  <div class="grid2">
+    <div class="stat-card">
+      <div class="num">0.586</div>
+      <div class="lbl">Model F1 (grouped)</div>
+      <div class="note">Logistic regression, client-grouped test set.</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">0.000</div>
+      <div class="lbl">Baseline F1 (grouped)</div>
+      <div class="note">Rule-based Week-4 baseline on the same test rows.</div>
+    </div>
+  </div>
+  <figure>
+    <img src="model_vs_baseline.png" alt="Model vs baseline F1 comparison">
+    <figcaption>Figure 1 — Model vs. baseline, evaluated on the identical client-grouped test set. The rule-based baseline's high threshold (score ≥ 3) makes it very conservative, so it produces almost no positive predictions on this split. The logistic regression model captures directional signal the fixed rule misses.</figcaption>
+  </figure>
+</section>
+
+<section id="validation">
+  <div class="section-index">04 — Honest validation</div>
+  <h2>Random split vs. client-grouped split</h2>
+  <p>The same model and features were evaluated two ways: a random 80/20 row-level split, and a <code>GroupShuffleSplit</code> keyed on <code>client_id</code> so that no client appears in both train and test. The grouped split is the stronger test because it measures generalization to <em>unseen clients</em>, which is closer to how this system would actually be used.</p>
+  <table>
+    <tr><th>Split</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th><th>ROC-AUC</th></tr>
+    <tr><td>Random row-level</td><td class="mono">0.613</td><td class="mono">0.615</td><td class="mono">0.768</td><td class="mono">0.683</td><td class="mono">0.639</td></tr>
+    <tr><td>Client-grouped</td><td class="mono">0.538</td><td class="mono">0.540</td><td class="mono">0.639</td><td class="mono">0.586</td><td class="mono">0.546</td></tr>
+  </table>
+  <figure>
+    <img src="validation_comparison.png" alt="Random split vs grouped split F1 comparison">
+    <figcaption>Figure 2 — The grouped split scores lower on every metric. This is reported honestly rather than hidden: the random split's higher score is the more optimistic estimate, and the grouped result is treated as the more relevant one for decision-support use.</figcaption>
+  </figure>
+  <div class="callout">
+    <strong>Interpretation</strong>
+    A lower grouped score does not mean the model failed — it means the random split was measuring something slightly different (interpolation within familiar clients) than the grouped split (generalization to new clients). The grouped result — F1 ≈ 0.586 — is the number used for decision-support claims in this project.
+  </div>
+  <figure>
+    <img src="confusion_matrix.png" alt="Confusion matrix, client-grouped test set">
+    <figcaption>Figure 3 — Confusion matrix on the client-grouped test set (n = 6,163 pages). 1,714 false positives and 1,136 false negatives are discussed in the error analysis below.</figcaption>
+  </figure>
+</section>
+
+<section id="leakage">
+  <div class="section-index">05 — Leakage audit</div>
+  <h2>What the model is not allowed to see</h2>
+  <p>Columns that directly define or reveal the target, and identifier columns, were excluded from the feature set and verified programmatically:</p>
+  <table>
+    <tr><th>Column</th><th>Leakage risk</th><th>Reason</th><th>Used as feature?</th></tr>
+    <tr><td class="mono">trend_direction</td><td>High</td><td>Defines the target directly</td><td>No</td></tr>
+    <tr><td class="mono">trend_pct</td><td>High</td><td>Directly related to the target definition</td><td>No</td></tr>
+    <tr><td class="mono">client_id</td><td>Medium</td><td>Identifier</td><td>No — grouping only</td></tr>
+    <tr><td class="mono">content_id</td><td>Medium</td><td>Identifier</td><td>No</td></tr>
+  </table>
+  <p>A deliberate leakage test confirms the risk is real: adding <code>trend_pct</code> back into the feature set raises the client-grouped F1 from <strong>0.586 to 0.850</strong> — an artificial jump that shows how a single label-derived column can make evaluation look far stronger than a legally available feature set actually supports. The honest, leakage-free feature set (F1 = 0.586) is the one used everywhere else in this project.</p>
+</section>
+
+<section id="errors">
+  <div class="section-index">06 — Error analysis</div>
+  <h2>Where the model is wrong</h2>
+  <div class="grid2">
+    <div class="stat-card">
+      <div class="num">1,714</div>
+      <div class="lbl">False positives</div>
+      <div class="note">Predicted declining but not labeled declining — a human may review a page that didn't need urgent action.</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">1,136</div>
+      <div class="lbl">False negatives</div>
+      <div class="note">Labeled declining but missed by the model — a page that may deserve priority doesn't get it.</div>
+    </div>
+  </div>
+  <p>Sampled false positives tend to be pages with low impressions and low click-through rate but a longer time since last update — the model leans on staleness even when visibility is thin. Sampled false negatives include pages with meaningfully high impressions (one with over 15,000 impressions in 90 days) that were still labeled as declining, suggesting the model under-weights cases where a large but low-converting audience coincides with decline. These patterns are directional observations from the sampled errors, not a claim that any single feature causes an individual misprediction.</p>
+</section>
+
+<section id="freshness">
+  <div class="section-index">07 — Freshness &amp; decay</div>
+  <h2>Content age is directional, not causal</h2>
+  <figure>
+    <img src="decay_refresh_insight.png" alt="Average decline probability by days-since-last-update quartile">
+    <figcaption>Figure 4 — Average predicted decline probability across quartiles of days since last update, computed on the held-out client-grouped test set.</figcaption>
+  </figure>
+  <div class="callout limit">
+    <strong>Correct interpretation</strong>
+    Content freshness may provide directional information for prioritization when considered alongside other signals. Age alone is not a sufficient reason to refresh content — staleness becomes more relevant when it appears together with elevated decline risk and meaningful operational value. This project never claims that old content <em>causes</em> performance decline.
+  </div>
+</section>
+
+<section id="queue">
+  <div class="section-index">08 — Ranked action queue</div>
+  <h2>From probability to a queue a human can act on</h2>
+  <p>Decline probability alone isn't the priority signal — a page with high risk and almost no traffic matters less than one with high risk and real visibility. A transparent <strong>business value score</strong> (0.4 × clicks + 0.3 × impressions + 0.3 × sessions, each min-max normalized on the test set) is combined with decline probability into a <strong>priority score</strong>:</p>
+  <p class="mono">priority_score = 0.7 × decline_probability + 0.3 × business_value_score</p>
+  <p>The full queue — 6,163 test-set pages, ranked highest to lowest — is exported to <code>work/outputs/ranked_action_queue.csv</code>. The top of the queue:</p>
+  <table>
+    <tr><th>Rank</th><th>Priority</th><th>Decline P</th><th>Archetype</th><th>Action</th><th>Reason codes</th></tr>
+    <tr><td>1</td><td class="mono">0.544</td><td class="mono">0.751</td><td>high_risk_high_value</td><td>Priority human review</td><td><span class="tag risk">high_decline_risk</span><span class="tag value">high_value_page</span><span class="tag stale">content_stale</span></td></tr>
+    <tr><td>2</td><td class="mono">0.543</td><td class="mono">0.765</td><td>high_risk_high_value</td><td>Priority human review</td><td><span class="tag risk">high_decline_risk</span><span class="tag value">high_value_page</span><span class="tag stale">content_stale</span></td></tr>
+    <tr><td>3</td><td class="mono">0.542</td><td class="mono">0.773</td><td>stale_high_risk</td><td>Review and refresh content</td><td><span class="tag risk">high_decline_risk</span><span class="tag stale">content_stale</span></td></tr>
+  </table>
+  <p style="font-size:13px;color:var(--slate)">Reason codes describe observable conditions associated with the recommendation — they are not a claim about the model's internal causal reasoning.</p>
+</section>
+
+<section id="archetypes">
+  <div class="section-index">09 — Archetypes</div>
+  <h2>Recommendation distribution</h2>
+  <figure>
+    <img src="action_distribution.png" alt="Distribution of recommended actions across the queue">
+    <figcaption>Figure 5 — How the 6,163 test-set pages distribute across recommended actions.</figcaption>
+  </figure>
+  <div class="archetype-grid">
+    <div class="arch-card"><h4>high_risk_high_value — 581 pages</h4><p>Priority human review.</p></div>
+    <div class="arch-card"><h4>stale_high_risk — 870 pages</h4><p>Review and investigate a possible refresh.</p></div>
+    <div class="arch-card"><h4>high_risk_ctr_opportunity — 1,560 pages</h4><p>Review title, snippet, and SERP presentation.</p></div>
+    <div class="arch-card"><h4>high_value_monitor — 960 pages</h4><p>Monitor; risk is currently lower.</p></div>
+    <div class="arch-card"><h4>low_priority — 2,192 pages</h4><p>No immediate action.</p></div>
+  </div>
+</section>
+
+<section id="review">
+  <div class="section-index">10 — Human review</div>
+  <h2>Human review rules &amp; no-go list</h2>
+  <p>A priority score means <strong>review sooner</strong>. It never means <strong>change automatically</strong>. Before acting on any recommendation, a human should check whether the page is still strategically important, whether the trend is meaningful or normal variation, whether a technical or indexing issue is present, whether search intent has changed, and whether a change carries legal or brand risk.</p>
+  <div class="callout limit">
+    <strong>Never automated from model output alone</strong>
+    <div class="nogo">
+      <ul>
+        <li>Publishing new content</li>
+        <li>Rewriting content</li>
+        <li>Deleting content</li>
+        <li>Changing URLs or redirects</li>
+        <li>Changing canonical tags</li>
+        <li>Making indexing decisions</li>
+        <li>Legal or compliance decisions</li>
+        <li>Treating model probability as certainty</li>
+        <li>Treating a reason code as proof of causality</li>
+        <li>Claiming an action will improve rankings</li>
+      </ul>
+    </div>
+  </div>
+  <p>This system is <strong>human-in-the-loop decision support</strong> — full stop.</p>
+</section>
+
+<section id="limitations">
+  <div class="section-index">11 — Limitations</div>
+  <h2>What this project does not claim</h2>
+  <ul>
+    <li>The model estimates the likelihood of a <em>dataset-defined</em> decline label — not an independently verified ground truth about content quality.</li>
+    <li>Grouped-split performance (F1 ≈ 0.586) is modest; this is a decision-support signal, not a high-confidence classifier.</li>
+    <li>The business value score is an operational proxy based on observed activity, not a financial value estimate.</li>
+    <li>Priority-score weights (0.7 / 0.3) are a transparent prototype choice, not a claim of universal optimality.</li>
+    <li>Results were measured on 32 anonymized clients and should not be assumed to generalize to every future client or vertical without re-validation.</li>
+  </ul>
+</section>
+
+<section id="monitoring">
+  <div class="section-index">12 — Monitoring</div>
+  <h2>Retraining triggers</h2>
+  <p>As a prototype rather than a production system, monitoring is lightweight: a baseline of positive-class rate, mean/median decline probability, and key feature distributions is stored in <code>work/outputs/monitoring_baseline.json</code>. Investigation (not automatic retraining) should be triggered by data drift, prediction drift, measured performance degradation on new labeled data, a shift in the base decline rate, rising missingness in key features, or the system being applied to a substantially different client population.</p>
+</section>
+
+<section id="repro">
+  <div class="section-index">13 — Reproducibility</div>
+  <h2>Notebooks &amp; outputs</h2>
+  <ul>
+    <li><code>work/notebooks/w05_model.ipynb</code> — model training and baseline comparison</li>
+    <li><code>work/notebooks/w06_validation_audit.ipynb</code> — random vs. grouped validation, leakage audit, error analysis</li>
+    <li><code>work/notebooks/w07_action_playbook.ipynb</code> — value score, priority score, archetypes, reason codes, ranked queue export</li>
+    <li><code>work/outputs/ranked_action_queue.csv</code>, <code>validation_metrics.json</code>, <code>leakage_audit.json</code>, <code>monitoring_baseline.json</code></li>
+  </ul>
+</section>
+
+<footer>
+  <p><strong>Built on the FlyRank ML Internship dataset.</strong> Learn more at <a href="https://flyrank.ai">flyrank.ai</a>.</p>
+  <p>This is a capstone prototype and decision-support tool. It does not predict Google's algorithm, does not claim that refreshing content causes improved rankings, and does not automate content changes.</p>
+</footer>
+</div>
+</body>
+</html>
